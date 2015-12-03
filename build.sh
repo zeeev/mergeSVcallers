@@ -1,0 +1,1 @@
+g++ -lpthread -lm -lz -Wall -std=c++0x -L. -I vcflib/tabixpp/htslib -I vcflib/include  src/mergeSVcallers.cpp -o mergeSVcallers vcflib/tabixpp/tabix.o *.a
