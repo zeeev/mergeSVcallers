@@ -1,6 +1,8 @@
 # mergeSVcallers
 Creating an integrated SV is difficult.  The code associated with this project was designed to help merge SVs in consistent and straightforward way.  The inputs to mergeSVcallers are Tabix merged VCF files and the output is a merged VCF file.  MergeSVcallers can be re-run iteratively. 
 
+Please feel free to join the SV merge quest!
+
 ## Downloading and installing:
 ```
 git clone --recursive https://github.com/zeeev/mergeSVcallers.git
@@ -31,3 +33,6 @@ Usage:
 - [ ] add a splitter function
 - [ ] remap CN0->DEL
 - [ ] add translocation functionality 
+- 
+## Thanks
+ 
