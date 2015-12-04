@@ -18,7 +18,7 @@ Usage:
 
  Required:
           -a - <STRING> - The samtools faidx indexed FASTA file
-          -f - <STRING> - A comma separated list of tabix index VCF files
+          -f - <STRING> - A comma separated list of Tabix indexed VCF files
           -t - <STRING> - A comma seperated list of tags/identifiers for each file
 
  Optional:
