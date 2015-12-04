@@ -33,6 +33,6 @@ Usage:
 - [ ] add a splitter function
 - [ ] remap CN0->DEL
 - [ ] add translocation functionality 
-- 
+
 ## Thanks
  
