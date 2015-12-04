@@ -11,13 +11,15 @@ LIB=-L. -Lvcflib/tabixpp/htslib/
 INCLUDE=-I vcflib/include/ -Ivcflib/src/ -Ivcflib/tabixpp/htslib -Ivcflib/tabixpp/
 LINKERS=-lhts -lm -lz -lpthread -lsplit
 
-all: mergeSVcallers clean
+all: buildVCFlib mergeSVcallers clean
 
 mergeSVcallers: vcflib/tabixpp/tabix.o libsplit.a libFasta.a libhts.a libvcflib.a
 	$(CXX) $(CPPFLAGS) $(INCLUDE) $(LIB)  src/mergeSVcallers.cpp -o mergeSVcallers *.a $(LINKERS) 
 
-libvcflib.a:
-	cd vcflib && make && cp libvcflib.a ../
+buildVCFlib:
+	cd vcflib && make
+libvcflib.a: buildVCFlib
+	cp vcflib/libvcflib.a .
 libhts.a: vcflib/libvcflib.a
 	cp vcflib/tabixpp/htslib/libhts.a .
 libFasta.a: vcflib/libvcflib.a
