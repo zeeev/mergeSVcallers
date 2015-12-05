@@ -80,7 +80,7 @@ void printHelp(void){
   //------------------------------- XXXXXXXXXX --------------------------------
   std::cerr << "          -a - <STRING> - The samtools faidx indexed FASTA file" << std::endl;
   std::cerr << "          -f - <STRING> - A comma separated list of Tabix indexed VCF files" << endl;
-  std::cerr << "          -t - <STRING> - A comma seperated list of tags/identifiers for each file" << endl;
+  std::cerr << "          -t - <STRING> - A comma separated  list of tags/identifiers for each file" << endl;
   
   std::cerr << endl;
   std::cerr << " Optional:  " << endl;
