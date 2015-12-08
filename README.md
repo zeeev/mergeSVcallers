@@ -28,8 +28,8 @@ make
           -This tool provides a simple set of operations to merge SVs.
           -Output is unsorted.
 ```
-##TESTED TOOLS
- - [X] WHAM
+##Tested Tools
+ - [X] WHAM-GRAPHENING
  - [X] LUMPY
  - [X] GENOME STRIP CNVs
  - [ ] GENOME STRIP DELETION
