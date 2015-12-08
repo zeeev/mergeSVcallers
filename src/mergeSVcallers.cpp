@@ -517,6 +517,11 @@ void mergeAndDump(vector<vcflib::Variant *> & svs){
 
   stringstream line;
 
+  int SVLEN = (END - POS);
+  
+  if(svtype == "DEL"){
+    SVLEN = -SVLEN;
+  }
 
 
   line << seqid     << "\t"
@@ -528,7 +533,7 @@ void mergeAndDump(vector<vcflib::Variant *> & svs){
        << FILTER    << "\t"
        << "SVTYPE=" << svtype << ";"
        << "END="    << END    << ";"
-       << "SVLEN="
+       << "SVLEN="  << SVLEN  << ";"
        << ciPOS
        << ciEND
        << "CIEND="  << threeCIL << "," << threeCIH << ";"
