@@ -27,6 +27,14 @@ Usage:
           -This tool provides a simple set of operations to merge SVs.
           -Output is unsorted.
 ```
+##TESTED TOOLS
+ - [X] WHAM
+ - [X] LUMPY
+ - [X] GENOME STRIP CNVs
+ - [ ] GENOME STRIP DELETION
+ - [ ] DELLY
+ - [ ] VARIATION HUNTER
+
 ##TODO
 - [ ] create a test suite
 - [ ] merge by reciprocal overlap
