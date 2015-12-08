@@ -716,6 +716,14 @@ void processChunk(std::string  seqid){
       }
       else{
 
+	// remapping genomestrip SV calls 
+
+	if(var.info["SVTYPE"].front() == "CNV"){
+	  if(var.info.find("GSCNCATEGORY") != var.info.end()){
+	    var.info["SVTYPE"] = var.info["GSCNCATEGORY"];
+	  }  
+	}
+
 	if(var.info["SVTYPE"].front() == "BND"){
 	  continue;
 	}
