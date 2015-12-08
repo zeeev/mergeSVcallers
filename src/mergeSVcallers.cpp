@@ -46,6 +46,40 @@ THE SOFTWARE.
 #include "../vcflib/include/Fasta.h"
 #include "../vcflib/include/Variant.h"
 
+int min(int l, int r){
+  if(r < l){
+    return r;
+  }
+  return l;
+}
+
+int max(int l, int r){
+  if(r < l){
+    return l;
+  }
+  return r;
+}
+
+int unionInterval(int s1, int s2, int e1, int e2){
+  
+  int ui = max(e1, e2)  - min(s1, s2);
+
+  return ui;
+}
+
+int intersectionInterval(int s1, int s2, int e1, int e2){
+  
+  int ii =  min(e1, e2) - max(s1, s2);
+  return ii;
+
+}
+
+double reciprocalOverlap(int s1, int s2, int e1, int e2){
+
+  return double(intersectionInterval(s1, s2, e1, e2))/double(unionInterval(s1,s2,e1,e2));
+
+}
+
 // sorts vcflib::Variant by start;
 bool sortStart(vcflib::Variant * L, vcflib::Variant * R){
 
@@ -57,9 +91,14 @@ bool sortStart(vcflib::Variant * L, vcflib::Variant * R){
   return (L->position < R->position);
 }
 
+struct varContainer{
+  bool processed;
+  vcflib::Variant * var;
+};
 
 struct options{
   int                                maxDist;
+  double                          reciprocal;
   std::vector<std::string>             files;
   std::vector<std::string>              tags;
   std::map<std::string, int>          seqids;
@@ -70,7 +109,7 @@ struct options{
 
 }globalOpts;
 
-static const char *optString = "hf:t:a:s:";
+static const char *optString = "hf:t:a:s:r:";
 
 void printHelp(void){
   cerr << " Usage:  " << endl;
@@ -85,6 +124,7 @@ void printHelp(void){
   std::cerr << endl;
   std::cerr << " Optional:  " << endl;
   std::cerr << "          -s - <INT>   - Merge SVs with both breakpoints N BP away [100] " << std::endl;
+  std::cerr << "          -r - <FLOAT> - Reciprocal overlap also required  [0]           " << std::endl;
   std::cerr << " Info:  " << endl;
   std::cerr << "          -This tool provides a simple set of operations to merge SVs." << std::endl;
   std::cerr << "          -Output is unsorted." << std::endl;
@@ -99,6 +139,12 @@ int parseOpts(int argc, char** argv)
   opt = getopt(argc, argv, optString);
   while(opt != -1){
     switch(opt){
+    case 'r':
+      {
+	globalOpts.reciprocal = atof(optarg);
+	std::cerr << "INFO: reciprocal overlap required: " << globalOpts.reciprocal << std::endl;
+	break;
+      }
     case 's':
       {
 	globalOpts.maxDist = atoi(optarg);
@@ -534,37 +580,100 @@ void mergeAndDump(vector<vcflib::Variant *> & svs, bool){
 */
 
 void manageLoopOverVar(std::vector<vcflib::Variant *> & data){
-
+  
   std::vector<vcflib::Variant *> svBuffer;
-
+  
   for(std::vector<vcflib::Variant *>::iterator it = data.begin();
       it != data.end(); it++){
 
+    int currentSVstart = (*it)->position ;
+    
     if(svBuffer.empty()){
       svBuffer.push_back(*it);
       continue;
     }
-
-    if( (*it)->position < svBuffer.back()->position ){
+    
+    if( currentSVstart < svBuffer.back()->position ){
       std::cerr << "FATAL: SVs are NOT sorted" << std::endl;
-      std::cerr << "INFO:  bgzip and Tabix files" << std::endl;
+      std::cerr << "INFO:  Bgzip and Tabix indexed files required" << std::endl;
       exit(1);
     }
-    // dear future self, kick yourself
-
-    if( ((*it)->position - svBuffer.back()->position) < globalOpts.maxDist
-	&& ( atoi((*it)->info["END"].front().c_str()) - atoi(svBuffer.back()->info["END"].front().c_str()) < globalOpts.maxDist )){
+    // if the current SV start is < the maxDist push it onto the buffer;
+    if( abs(currentSVstart - svBuffer.back()->position ) < globalOpts.maxDist ){
       svBuffer.push_back(*it);
     }
     else{
-      mergeAndDump(svBuffer, true);
+
+      // load a container of vcflib::variant objects to keep track of 
+      // processed (a bool)
+      std::vector<varContainer *> tmpContainer;
+      
+      for(std::vector<vcflib::Variant *>::iterator iz = svBuffer.begin();
+	  iz != svBuffer.end(); iz++){
+	varContainer * tmp = new varContainer;
+	tmp->processed = false;
+	tmp->var = *iz;
+	tmpContainer.push_back(tmp);
+      }
+	
+      bool keepDumping = true;
+      
+      // keep going over vcflib::variants until they are all printed
+      // this function also clusters 
+
+      while(keepDumping){
+
+	vcflib::Variant * currentVar = NULL;
+	std::vector<varContainer *>::iterator oz = tmpContainer.begin();
+	  
+	while(currentVar == NULL && oz != tmpContainer.end()){
+	  if((*oz)->processed == true){
+	    oz++;
+	  }
+	  else{
+	    currentVar = (*oz)->var;
+	    (*oz)->processed = true;
+	    oz++;
+	  }
+	}
+
+	if(currentVar == NULL){
+	  break;
+	}
+	
+	std::vector<vcflib::Variant *> tmpBuffer;
+
+	tmpBuffer.push_back(currentVar);
+
+	for(std::vector<varContainer *>::iterator dd = tmpContainer.begin();
+	    dd != tmpContainer.end(); dd++){
+	  
+	  if((*dd)->processed == true){
+	    continue;
+	  }
+
+	  int dist = abs(atoi((*dd)->var->info["END"].front().c_str()) 
+			 - atoi(currentVar->info["END"].front().c_str()));
+	  
+	  double recip = reciprocalOverlap(currentVar->position, 
+					   (*dd)->var->position,
+					   atoi((*dd)->var->info["END"].front().c_str()),
+					   atoi(currentVar->info["END"].front().c_str()));
+	  
+
+
+	  if(dist < globalOpts.maxDist && recip >= globalOpts.reciprocal){
+	    tmpBuffer.push_back((*dd)->var);
+	    (*dd)->processed = true;
+	  }
+	}
+	mergeAndDump(tmpBuffer, true);	
+      }
+    
       svBuffer.clear();
       svBuffer.push_back(*it);
     }
-
   }
-
-
 }
 
 //------------------------------- SUBROUTINE --------------------------------
@@ -722,8 +831,8 @@ void validate (void)
 
 int main( int argc, char** argv)
 {
-
-  globalOpts.maxDist = 100;
+  globalOpts.reciprocal = 0;
+  globalOpts.maxDist  = 100;
 
   parseOpts(argc, argv);
 
