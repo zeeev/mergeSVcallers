@@ -38,9 +38,8 @@ make
 
 ##TODO
 - [ ] create a test suite
-- [ ] merge by reciprocal overlap
+- [X] merge by reciprocal overlap
 - [ ] add a splitter function
-- [ ] remap CN0->DEL
 - [ ] add translocation functionality 
 
 ## Thanks
