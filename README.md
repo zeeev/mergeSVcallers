@@ -58,7 +58,7 @@ R --vanilla < plotVenn.R --args plottest-data.txt testing DEL
 
 The first argument is the data.  The second argument is a file prefix for the plot.  The last argument is the type that you want to plot.  This script uses the package gplots in [R] to generate a PDF in the same directory. 
 
-Here is an example plot:
+Here is an example plot (This is just an example of poorly matched samples):
 
 ![alt tag](https://github.com/zeeev/mergeSVcallers/blob/master/figs/testing_DEL_TueDec08_13_07_39.png)
  
