@@ -13,16 +13,17 @@ make
 ## Usage
 
 ```
-Usage:
+ Usage:
        mergeSVcallers -a ref.fasta -f a.vcf.gz,b.vcf.gz -t WHAM,LUMPY -s 500
 
  Required:
           -a - <STRING> - The samtools faidx indexed FASTA file
           -f - <STRING> - A comma separated list of Tabix indexed VCF files
-          -t - <STRING> - A comma seperated list of tags/identifiers for each file
+          -t - <STRING> - A comma separated  list of tags/identifiers for each file
 
  Optional:
           -s - <INT>   - Merge SVs with both breakpoints N BP away [100]
+          -r - <FLOAT> - Reciprocal overlap also required  [0]
  Info:
           -This tool provides a simple set of operations to merge SVs.
           -Output is unsorted.
