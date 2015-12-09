@@ -458,7 +458,7 @@ void mergeAndDump(vector<vcflib::Variant *> & svs){
   double REND = mean(ends  );
 
   double fiveSD  = sqrt(var(starts,   RPOS));
-  double threeSD = sqrt(var(ends,     RPOS));
+  double threeSD = sqrt(var(ends,     REND));
 
   int POS = (int)RPOS;
   int END = (int)REND;
@@ -665,8 +665,6 @@ void manageLoopOverVar(std::vector<vcflib::Variant *> & data){
 					   atoi((*dd)->var->info["END"].front().c_str()),
 					   atoi(currentVar->info["END"].front().c_str()));
 	  
-
-
 	  if(dist < globalOpts.maxDist && recip >= globalOpts.reciprocal){
 	    tmpBuffer.push_back((*dd)->var);
 	    (*dd)->processed = true;
@@ -674,7 +672,11 @@ void manageLoopOverVar(std::vector<vcflib::Variant *> & data){
 	}
 	mergeAndDump(tmpBuffer, true);	
       }
-    
+//      for(std::vector<varContainer *>::iterator dd = tmpContainer.begin();
+//	  dd != tmpContainer.end(); dd++){
+//	delete *dd;
+//      }
+      
       svBuffer.clear();
       svBuffer.push_back(*it);
     }
@@ -876,6 +878,7 @@ int main( int argc, char** argv)
     processChunk(it->first);
   }
 
+  std::cerr << "INFO: mergeSVcallers finished" << std::endl;
 
   return 0;
 }
