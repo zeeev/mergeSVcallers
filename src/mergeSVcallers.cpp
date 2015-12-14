@@ -717,28 +717,39 @@ void processChunk(std::string  seqid){
     // looping over read and loading it into new vcflib pointer
 
     while (getNext) {
-
       if(!(*it)->getNextVariant(var)){
 	getNext = false;
       }
       else{
-
+	
 	// remapping genomestrip SV calls 
 
 	if(var.info["SVTYPE"].front() == "CNV"){
 	  if(var.info.find("GSCNCATEGORY") != var.info.end()){
 	    var.info["SVTYPE"] = var.info["GSCNCATEGORY"];
+	    
+	    if(var.info["SVTYPE"].front() == "MIXED"){
+	      var.info["SVTYPE"][0] = "CNV";
+	    }
 	  }  
 	}
 
 	if(var.info["SVTYPE"].front() == "BND"){
 	  continue;
 	}
+	if(var.info["SVTYPE"].front() == "TRA"){
+	  continue;
+	}
 
 	vcflib::Variant * v  = new vcflib::Variant;
 	*v = var;
-	v->info["TAGS"].push_back(globalOpts.tags[index]);
-	data.push_back(v);
+	if(v->info["TAGS"].empty()){
+	  v->info["TAGS"].push_back(globalOpts.tags[index]);
+	  data.push_back(v);
+	}
+	else{
+	  data.push_back(v);
+	}
       }
     }
     index += 1;
@@ -746,6 +757,8 @@ void processChunk(std::string  seqid){
 
   std::cerr << "INFO: sorting: seqid: " << seqid << std::endl;
   std::sort(data.begin(), data.end(), sortStart);
+
+  std::cerr << "n SVs in chunk: " << data.size() << std::endl;
 
   if(data.empty()){
     return;
@@ -758,10 +771,6 @@ void processChunk(std::string  seqid){
       it != data.end(); it++){
     delete *it;
   }
-
-
-
-
 
 }
 
