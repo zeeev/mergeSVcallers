@@ -536,7 +536,6 @@ void mergeAndDump(vector<vcflib::Variant *> & svs){
        << "SVLEN="  << SVLEN  << ";"
        << ciPOS
        << ciEND
-       << "CIEND="  << threeCIL << "," << threeCIH << ";"
        << "FIVE="   << join(starts, ",") << ";"
        << "THREE="  << join(ends, ",") << ";"
        << "TAGS="   << join(tools, ",") << ";"
