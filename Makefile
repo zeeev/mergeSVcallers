@@ -6,15 +6,15 @@
 CC=gcc
 CXX=g++
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always)
-CPPFLAGS= -std=c++0x -Wall -DVERSION=\"$(GIT_VERSION)\" 
+CPPFLAGS= -std=c++0x -O3 -Wall -DVERSION=\"$(GIT_VERSION)\"
 LIB=-L. -Lvcflib/tabixpp/htslib/
 INCLUDE=-I vcflib/include/ -Ivcflib/src/ -Ivcflib/tabixpp/htslib -Ivcflib/tabixpp/
 LINKERS=-lhts -lm -lz -lpthread -lsplit
 
-all: buildVCFlib mergeSVcallers clean
+all: buildVCFlib mergeSVcallers
 
 mergeSVcallers: vcflib/tabixpp/tabix.o libsplit.a libFasta.a libhts.a libvcflib.a
-	$(CXX) $(CPPFLAGS) $(INCLUDE) $(LIB)  src/mergeSVcallers.cpp -o mergeSVcallers *.a $(LINKERS) 
+	$(CXX) $(CPPFLAGS) $(INCLUDE) $(LIB)  src/mergeSVcallers.cpp -o mergeSVcallers *.a $(LINKERS)
 
 buildVCFlib:
 	cd vcflib && make
@@ -28,4 +28,4 @@ libsplit.a: vcflib/libvcflib.a
 	ar rcs libsplit.a vcflib/src/split.o
 
 clean:
-	rm  *.a 
+	rm  *.a

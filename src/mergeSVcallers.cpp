@@ -61,14 +61,14 @@ int max(int l, int r){
 }
 
 int unionInterval(int s1, int s2, int e1, int e2){
-  
+
   int ui = max(e1, e2)  - min(s1, s2);
 
   return ui;
 }
 
 int intersectionInterval(int s1, int s2, int e1, int e2){
-  
+
   int ii =  min(e1, e2) - max(s1, s2);
   return ii;
 
@@ -120,7 +120,7 @@ void printHelp(void){
   std::cerr << "          -a - <STRING> - The samtools faidx indexed FASTA file" << std::endl;
   std::cerr << "          -f - <STRING> - A comma separated list of Tabix indexed VCF files" << endl;
   std::cerr << "          -t - <STRING> - A comma separated  list of tags/identifiers for each file" << endl;
-  
+
   std::cerr << endl;
   std::cerr << " Optional:  " << endl;
   std::cerr << "          -s - <INT>   - Merge SVs with both breakpoints N BP away [100] " << std::endl;
@@ -518,7 +518,7 @@ void mergeAndDump(vector<vcflib::Variant *> & svs){
   stringstream line;
 
   int SVLEN = (END - POS);
-  
+
   if(svtype == "DEL"){
     SVLEN = -SVLEN;
   }
@@ -576,110 +576,88 @@ void mergeAndDump(vector<vcflib::Variant *> & svs, bool){
 //------------------------------- SUBROUTINE --------------------------------
 /*
  Function input  : a vector of var objects
-
  Function does   : processes a chunk of the files
-
  Function returns:
-
 */
 
 void manageLoopOverVar(std::vector<vcflib::Variant *> & data){
-  
-  std::vector<vcflib::Variant *> svBuffer;
-  
-  for(std::vector<vcflib::Variant *>::iterator it = data.begin();
-      it != data.end(); it++){
 
-    int currentSVstart = (*it)->position ;
-    
-    if(svBuffer.empty()){
-      svBuffer.push_back(*it);
-      continue;
+    std::vector<vcflib::Variant *> tmpdata;
+    for(std::vector<vcflib::Variant *>::iterator it = data.begin();
+        it != data.end(); it++ ){
+        tmpdata.push_back(*it);
     }
-    
-    if( currentSVstart < svBuffer.back()->position ){
-      std::cerr << "FATAL: SVs are NOT sorted" << std::endl;
-      std::cerr << "INFO:  Bgzip and Tabix indexed files required" << std::endl;
-      exit(1);
+
+    bool moreToDump = true;
+
+    std::vector<vcflib::Variant *> svBuffer;
+
+    while(moreToDump){
+        // current variant
+        vcflib::Variant * cp = tmpdata.front();
+        /* we are searching for the first non empty vcflib obj
+           if we do not find anything we are done             */
+        int i = 0;
+        while(cp == NULL){
+            i += 1;
+            if(i == tmpdata.size()){
+                moreToDump = false;
+                break;
+            }
+            cp = tmpdata[i];
+        }
+        if(cp == NULL){
+            break;
+        }
+        /* we loop over variants to see if there are any to
+           merge with cp and put them in the buffer */
+        svBuffer.push_back(cp);
+
+        for(std::vector<vcflib::Variant *>::iterator it = tmpdata.begin();
+            it != tmpdata.end(); it++ ){
+            // no self merging
+            if(*it == NULL){
+                continue;
+            }
+            if(*it == cp){
+                *it = NULL;
+                continue;
+            }
+            if(atoi(cp->info["END"].front().c_str()) <
+               (*it)->position){
+                break;
+            }
+
+            int d1 = abs(cp->position - (*it)->position );
+            int d2 = abs(
+                         atoi(cp->info["END"].front().c_str())  -
+                         atoi((*it)->info["END"].front().c_str() )
+                         );
+            if(d1 > globalOpts.maxDist || d2 > globalOpts.maxDist){
+                continue;
+            }
+            double recip = reciprocalOverlap(cp->position,
+                                             (*it)->position,
+                                             atoi(cp->info["END"].front().c_str()),
+                                             atoi((*it)->info["END"].front().c_str()));
+
+            if( recip < globalOpts.reciprocal){
+                continue;
+            }
+            svBuffer.push_back(*it);
+            *it = NULL;
+        }
+
+        cp = NULL;
+        mergeAndDump(svBuffer, true);
+
+        svBuffer.clear();
     }
-    // if the current SV start is < the maxDist push it onto the buffer;
-    if( abs(currentSVstart - svBuffer.back()->position ) < globalOpts.maxDist ){
-      svBuffer.push_back(*it);
+    // cleanup
+    for(std::vector<vcflib::Variant *>::iterator it = data.begin();
+        it != data.end(); it++ ){
+        delete (*it);
     }
-    else{
-
-      // load a container of vcflib::variant objects to keep track of 
-      // processed (a bool)
-      std::vector<varContainer *> tmpContainer;
-      
-      for(std::vector<vcflib::Variant *>::iterator iz = svBuffer.begin();
-	  iz != svBuffer.end(); iz++){
-	varContainer * tmp = new varContainer;
-	tmp->processed = false;
-	tmp->var = *iz;
-	tmpContainer.push_back(tmp);
-      }
-	
-      bool keepDumping = true;
-      
-      // keep going over vcflib::variants until they are all printed
-      // this function also clusters 
-
-      while(keepDumping){
-
-	vcflib::Variant * currentVar = NULL;
-	std::vector<varContainer *>::iterator oz = tmpContainer.begin();
-	  
-	while(currentVar == NULL && oz != tmpContainer.end()){
-	  if((*oz)->processed == true){
-	    oz++;
-	  }
-	  else{
-	    currentVar = (*oz)->var;
-	    (*oz)->processed = true;
-	    oz++;
-	  }
-	}
-
-	if(currentVar == NULL){
-	  break;
-	}
-	
-	std::vector<vcflib::Variant *> tmpBuffer;
-
-	tmpBuffer.push_back(currentVar);
-
-	for(std::vector<varContainer *>::iterator dd = tmpContainer.begin();
-	    dd != tmpContainer.end(); dd++){
-	  
-	  if((*dd)->processed == true){
-	    continue;
-	  }
-
-	  int dist = abs(atoi((*dd)->var->info["END"].front().c_str()) 
-			 - atoi(currentVar->info["END"].front().c_str()));
-	  
-	  double recip = reciprocalOverlap(currentVar->position, 
-					   (*dd)->var->position,
-					   atoi((*dd)->var->info["END"].front().c_str()),
-					   atoi(currentVar->info["END"].front().c_str()));
-	  
-	  if(dist < globalOpts.maxDist && recip >= globalOpts.reciprocal){
-	    tmpBuffer.push_back((*dd)->var);
-	    (*dd)->processed = true;
-	  }
-	}
-	mergeAndDump(tmpBuffer, true);	
-      }
-//      for(std::vector<varContainer *>::iterator dd = tmpContainer.begin();
-//	  dd != tmpContainer.end(); dd++){
-//	delete *dd;
-//      }
-      
-      svBuffer.clear();
-      svBuffer.push_back(*it);
-    }
-  }
 }
 
 //------------------------------- SUBROUTINE --------------------------------
@@ -720,17 +698,17 @@ void processChunk(std::string  seqid){
 	getNext = false;
       }
       else{
-	
-	// remapping genomestrip SV calls 
+
+	// remapping genomestrip SV calls
 
 	if(var.info["SVTYPE"].front() == "CNV"){
 	  if(var.info.find("GSCNCATEGORY") != var.info.end()){
 	    var.info["SVTYPE"] = var.info["GSCNCATEGORY"];
-	    
+
 	    if(var.info["SVTYPE"].front() == "MIXED"){
 	      var.info["SVTYPE"][0] = "CNV";
 	    }
-	  }  
+	  }
 	}
 
 	if(var.info["SVTYPE"].front() == "BND"){
@@ -764,12 +742,6 @@ void processChunk(std::string  seqid){
   }
 
   manageLoopOverVar(data);
-
-  // deleting objects
-  for(std::vector<vcflib::Variant *>::iterator it = data.begin();
-      it != data.end(); it++){
-    delete *it;
-  }
 
 }
 
