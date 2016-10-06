@@ -1,5 +1,5 @@
 # mergeSVcallers
-Creating an integrated SV is difficult.  The code associated with this project was designed to help merge SVs in a consistent and straightforward way.  The inputs to mergeSVcallers are Tabix merged VCF files and the output is a merged VCF file.  MergeSVcallers can be re-run iteratively. 
+Creating an integrated SV callset is difficult.  The code associated with this project was designed to help merge SVs in a consistent and straightforward way.  The inputs to mergeSVcallers are Tabix merged VCF files and the output is a merged VCF file.  MergeSVcallers can be re-run iteratively. 
 
 Please feel free to join the SV merge quest!
 
